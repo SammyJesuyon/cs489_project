@@ -1,29 +1,23 @@
-from typing import Optional
 from pydantic import BaseModel, EmailStr
+from typing import Optional
+from app.schemas.address_dto import AddressCreateDTO, AddressDTO
 
-from .address_dto import AddressCreateDTO
-from .common import ORMBase
-
-class AddressSlimDTO(ORMBase):
-    id: int
-    street: str
-    city: str
-    state: str
-    zip_code: str
-
-class PatientDTO(ORMBase):
-    id: int
-    patient_no: str
-    first_name: str
-    last_name: str
-    phone: Optional[str] = None
-    email: Optional[EmailStr] = None
-    primaryAddress: Optional[AddressSlimDTO] = None
-
-class CreatePatientDTO(BaseModel):
-    patient_no: str
+class PatientCreateDTO(BaseModel):
     first_name: str
     last_name: str
     phone: str
     email: EmailStr
+    password: str
     address: Optional[AddressCreateDTO] = None
+
+class PatientDTO(BaseModel):
+    id: int
+    patient_no: str
+    first_name: str
+    last_name: str
+    phone: Optional[str]
+    email: str
+    address: Optional[AddressDTO] = None
+
+    class Config:
+        from_attributes = True

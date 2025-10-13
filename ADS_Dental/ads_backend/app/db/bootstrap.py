@@ -1,48 +1,79 @@
+# Completely rewritten to match the actual structure defined in models.py.
 from datetime import date, time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .models import Base, Address, Surgery, Dentist, Patient, Appointment
+from .models import Base, Address, Surgery, Dentist, Patient, Appointment, User, Role
 
-engine = create_engine("sqlite:///ads_dental.db", echo=False, future=True)
+# Set up the engine and session
+engine = create_engine("mysql+pymysql://root:password@localhost:3306/ADSDentalSurgeryDB", echo=False, future=True)
 Session = sessionmaker(bind=engine, autoflush=False)
 
 def bootstrap():
+    # Drop all existing tables and recreate them
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
-    s = Session()
+    session = Session()
 
+    # Insert sample addresses
     addr1 = Address(street="123 West Avenue", city="Phoenix", state="AZ", zip_code="85012")
     addr2 = Address(street="900 Johns Street", city="Cleveland", state="OH", zip_code="43098")
     addr3 = Address(street="45 Green Street", city="Dallas", state="TX", zip_code="75201")
-    s.add_all([addr1, addr2, addr3])
+    session.add_all([addr1, addr2, addr3])
+    session.flush()  # Ensure addresses have primary keys
 
-    surg1 = Surgery(surgery_no="S15", name="Bells Court Dental", phone="480-123-0000", address=addr1)
-    surg2 = Surgery(surgery_no="S10", name="The Galleria Surgery", phone="216-222-1111", address=addr2)
-    surg3 = Surgery(surgery_no="S13", name="Pearl Dental South", phone="972-333-4444", address=addr3)
-    s.add_all([surg1, surg2, surg3])
+    # Insert sample surgeries (use valid fields: surgery_no, phone, address_id)
+    surg1 = Surgery(surgery_no="S001", name="Bells Court Dental", phone="602-555-1234", address_id=addr1.id)
+    surg2 = Surgery(surgery_no="S002", name="The Galleria Surgery", phone="216-555-5678", address_id=addr2.id)
+    surg3 = Surgery(surgery_no="S003", name="Pearl Dental South", phone="214-555-9012", address_id=addr3.id)
+    session.add_all([surg1, surg2, surg3])
+    session.flush()
 
-    d1 = Dentist(first_name="Tony", last_name="Smith", email="tsmith@ads.com", surgery=surg1)
-    d2 = Dentist(first_name="Helen", last_name="Pearson", email="hpearson@ads.com", surgery=surg2)
-    d3 = Dentist(first_name="Robin", last_name="Plevin", email="rplevin@ads.com", surgery=surg3)
-    s.add_all([d1, d2, d3])
+    # Insert sample dentists (valid fields)
+    d1 = Dentist(first_name="Tony", last_name="Smith", specialization="General", phone="480-123-1111", email="tsmith@ads.com", surgery_id=surg1.id)
+    d2 = Dentist(first_name="Helen", last_name="Pearson", specialization="Orthodontics", phone="480-123-2222", email="hpearson@ads.com", surgery_id=surg2.id)
+    d3 = Dentist(first_name="Robin", last_name="Plevin", specialization="Pediatric", phone="480-123-3333", email="rplevin@ads.com", surgery_id=surg3.id)
+    session.add_all([d1, d2, d3])
+    session.flush()
 
-    p1 = Patient(patient_no="P100", first_name="Gillian", last_name="White", email="gwhite@mail.com", address=addr1)
-    p2 = Patient(patient_no="P105", first_name="Jill", last_name="Bell", email="jbell@mail.com", address=addr1)
-    p3 = Patient(patient_no="P108", first_name="Ian", last_name="MacKay", email="ianm@mail.com", address=addr2)
-    p4 = Patient(patient_no="P110", first_name="John", last_name="Walker", email="jwalker@mail.com", address=addr3)
-    s.add_all([p1, p2, p3, p4])
+    # Insert sample patients (include patient_no)
+    p1 = Patient(patient_no="P001", first_name="Gillian", last_name="White", email="gwhite@mail.com", address_id=addr1.id)
+    p2 = Patient(patient_no="P002", first_name="Jill", last_name="Bell", email="jbell@mail.com", address_id=addr1.id)
+    p3 = Patient(patient_no="P003", first_name="Ian", last_name="MacKay", email="ianm@mail.com", address_id=addr2.id)
+    p4 = Patient(patient_no="P004", first_name="John", last_name="Walker", email="jwalker@mail.com", address_id=addr3.id)
+    session.add_all([p1, p2, p3, p4])
+    session.flush()
 
-    s.add_all([
-        Appointment(appt_date=date(2013,9,12), appt_time=time(10,0), patient=p1, dentist=d1, surgery=surg1),
-        Appointment(appt_date=date(2013,9,12), appt_time=time(12,0), patient=p2, dentist=d1, surgery=surg1),
-        Appointment(appt_date=date(2013,9,13), appt_time=time(10,0), patient=p3, dentist=d2, surgery=surg2),
-        Appointment(appt_date=date(2013,9,14), appt_time=time(14,0), patient=p3, dentist=d2, surgery=surg2),
-        Appointment(appt_date=date(2013,9,14), appt_time=time(16,30), patient=p2, dentist=d3, surgery=surg3),
-        Appointment(appt_date=date(2013,9,15), appt_time=time(18,0), patient=p4, dentist=d3, surgery=surg3),
-    ])
+    # Insert sample roles
+    role_admin = Role(name="Admin")
+    role_dentist = Role(name="Dentist")
+    role_patient = Role(name="Patient")
+    session.add_all([role_admin, role_dentist, role_patient])
+    session.flush()
 
-    s.commit()
-    s.close()
+    # Insert sample users and assign roles
+    user1 = User(username="admin", email="admin@ads.com", password_hash="adminpass", roles=[role_admin])
+    user2 = User(username="tsmith", email="tsmith@ads.com", password_hash="dentistpass", roles=[role_dentist])
+    user3 = User(username="hpearson", email="hpearson@ads.com", password_hash="dentistpass", roles=[role_dentist])
+    user4 = User(username="rplevin", email="rplevin@ads.com", password_hash="dentistpass", roles=[role_dentist])
+    user5 = User(username="gwhite", email="gwhite@mail.com", password_hash="patientpass", roles=[role_patient])
+    user6 = User(username="jbell", email="jbell@mail.com", password_hash="patientpass", roles=[role_patient])
+    user7 = User(username="ianm", email="ianm@mail.com", password_hash="patientpass", roles=[role_patient])
+    user8 = User(username="jwalker", email="jwalker@mail.com", password_hash="patientpass", roles=[role_patient])
+    session.add_all([user1, user2, user3, user4, user5, user6, user7, user8])
+    session.flush()
+
+    # Insert sample appointments (include appointment_time, status as enum)
+    appt1 = Appointment(appointment_date=date(2013,9,12), appointment_time=time(9,0), status="BOOKED", patient_id=p1.id, dentist_id=d1.id, surgery_id=surg1.id)
+    appt2 = Appointment(appointment_date=date(2013,9,12), appointment_time=time(10,0), status="BOOKED", patient_id=p2.id, dentist_id=d1.id, surgery_id=surg1.id)
+    appt3 = Appointment(appointment_date=date(2013,9,13), appointment_time=time(11,0), status="BOOKED", patient_id=p3.id, dentist_id=d2.id, surgery_id=surg2.id)
+    appt4 = Appointment(appointment_date=date(2013,9,14), appointment_time=time(12,0), status="BOOKED", patient_id=p3.id, dentist_id=d2.id, surgery_id=surg2.id)
+    appt5 = Appointment(appointment_date=date(2013,9,14), appointment_time=time(13,0), status="BOOKED", patient_id=p2.id, dentist_id=d3.id, surgery_id=surg3.id)
+    appt6 = Appointment(appointment_date=date(2013,9,15), appointment_time=time(14,0), status="BOOKED", patient_id=p4.id, dentist_id=d3.id, surgery_id=surg3.id)
+    session.add_all([appt1, appt2, appt3, appt4, appt5, appt6])
+
+    # Commit and close session
+    session.commit()
+    session.close()
 
 if __name__ == "__main__":
     bootstrap()
