@@ -185,9 +185,11 @@
 #     addresses = (await db.execute(stmt)).scalars().all()
 #     return [AddressDTO.from_orm(a) for a in addresses]
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-from app.api.endpoints import patients, auth, appointments
+from app.api.endpoints import patients, auth, appointments, users, dentists
+from app.exceptions.http_exceptions import http_exception_handler, generic_exception_handler
 
 
 @asynccontextmanager
@@ -197,10 +199,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-@app.get("/")
-async def root():
-    return {"message": "ADS Dental Surgeries API is running 🚀"}
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
+
+# @app.get("/")
+# async def root():
+#     return {"message": "ADS Dental Surgeries API is running 🚀"}
 
 app.include_router(patients.router)
+app.include_router(dentists.router)
 app.include_router(auth.router)
 app.include_router(appointments.router)
+app.include_router(users.router)

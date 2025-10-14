@@ -2,7 +2,8 @@
 from datetime import date, time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .models import Base, Address, Surgery, Dentist, Patient, Appointment, User, Role
+from app.db.models import Base, Address, Surgery, Dentist, Patient, Appointment, User, Role
+from app.core.security import hash_password
 
 # Set up the engine and session
 engine = create_engine("mysql+pymysql://root:password@localhost:3306/ADSDentalSurgeryDB", echo=False, future=True)
@@ -28,38 +29,38 @@ def bootstrap():
     session.add_all([surg1, surg2, surg3])
     session.flush()
 
-    # Insert sample dentists (valid fields)
-    d1 = Dentist(first_name="Tony", last_name="Smith", specialization="General", phone="480-123-1111", email="tsmith@ads.com", surgery_id=surg1.id)
-    d2 = Dentist(first_name="Helen", last_name="Pearson", specialization="Orthodontics", phone="480-123-2222", email="hpearson@ads.com", surgery_id=surg2.id)
-    d3 = Dentist(first_name="Robin", last_name="Plevin", specialization="Pediatric", phone="480-123-3333", email="rplevin@ads.com", surgery_id=surg3.id)
-    session.add_all([d1, d2, d3])
-    session.flush()
-
-    # Insert sample patients (include patient_no)
-    p1 = Patient(patient_no="P001", first_name="Gillian", last_name="White", email="gwhite@mail.com", address_id=addr1.id)
-    p2 = Patient(patient_no="P002", first_name="Jill", last_name="Bell", email="jbell@mail.com", address_id=addr1.id)
-    p3 = Patient(patient_no="P003", first_name="Ian", last_name="MacKay", email="ianm@mail.com", address_id=addr2.id)
-    p4 = Patient(patient_no="P004", first_name="John", last_name="Walker", email="jwalker@mail.com", address_id=addr3.id)
-    session.add_all([p1, p2, p3, p4])
-    session.flush()
-
     # Insert sample roles
-    role_admin = Role(name="Admin")
-    role_dentist = Role(name="Dentist")
-    role_patient = Role(name="Patient")
+    role_admin = Role(name="ADMIN")
+    role_dentist = Role(name="DENTIST")
+    role_patient = Role(name="PATIENT")
     session.add_all([role_admin, role_dentist, role_patient])
     session.flush()
 
     # Insert sample users and assign roles
-    user1 = User(username="admin", email="admin@ads.com", password_hash="adminpass", roles=[role_admin])
-    user2 = User(username="tsmith", email="tsmith@ads.com", password_hash="dentistpass", roles=[role_dentist])
-    user3 = User(username="hpearson", email="hpearson@ads.com", password_hash="dentistpass", roles=[role_dentist])
-    user4 = User(username="rplevin", email="rplevin@ads.com", password_hash="dentistpass", roles=[role_dentist])
-    user5 = User(username="gwhite", email="gwhite@mail.com", password_hash="patientpass", roles=[role_patient])
-    user6 = User(username="jbell", email="jbell@mail.com", password_hash="patientpass", roles=[role_patient])
-    user7 = User(username="ianm", email="ianm@mail.com", password_hash="patientpass", roles=[role_patient])
-    user8 = User(username="jwalker", email="jwalker@mail.com", password_hash="patientpass", roles=[role_patient])
+    user1 = User(username="admin", email="admin@ads.com", password_hash=hash_password("adminpass"), roles=[role_admin])
+    user2 = User(username="tsmith", email="tsmith@ads.com", password_hash=hash_password("dentistpass"), roles=[role_dentist])
+    user3 = User(username="hpearson", email="hpearson@ads.com", password_hash=hash_password("dentistpass"), roles=[role_dentist])
+    user4 = User(username="rplevin", email="rplevin@ads.com", password_hash=hash_password("dentistpass"), roles=[role_dentist])
+    user5 = User(username="gwhite", email="gwhite@mail.com", password_hash=hash_password("patientpass"), roles=[role_patient])
+    user6 = User(username="jbell", email="jbell@mail.com", password_hash=hash_password("patientpass"), roles=[role_patient])
+    user7 = User(username="ianm", email="ianm@mail.com", password_hash=hash_password("patientpass"), roles=[role_patient])
+    user8 = User(username="jwalker", email="jwalker@mail.com", password_hash=hash_password("patientpass"), roles=[role_patient])
     session.add_all([user1, user2, user3, user4, user5, user6, user7, user8])
+    session.flush()
+
+    # Insert sample dentists with user_id
+    d1 = Dentist(user_id=user2.id, first_name="Tony", last_name="Smith", specialization="General", phone="480-123-1111", email="tsmith@ads.com", surgery_id=surg1.id)
+    d2 = Dentist(user_id=user3.id, first_name="Helen", last_name="Pearson", specialization="Orthodontics", phone="480-123-2222", email="hpearson@ads.com", surgery_id=surg2.id)
+    d3 = Dentist(user_id=user4.id, first_name="Robin", last_name="Plevin", specialization="Pediatric", phone="480-123-3333", email="rplevin@ads.com", surgery_id=surg3.id)
+    session.add_all([d1, d2, d3])
+    session.flush()
+
+    # Insert sample patients with user_id
+    p1 = Patient(user_id=user5.id, patient_no="P001", first_name="Gillian", last_name="White", email="gwhite@mail.com", address_id=addr1.id)
+    p2 = Patient(user_id=user6.id, patient_no="P002", first_name="Jill", last_name="Bell", email="jbell@mail.com", address_id=addr1.id)
+    p3 = Patient(user_id=user7.id, patient_no="P003", first_name="Ian", last_name="MacKay", email="ianm@mail.com", address_id=addr2.id)
+    p4 = Patient(user_id=user8.id, patient_no="P004", first_name="John", last_name="Walker", email="jwalker@mail.com", address_id=addr3.id)
+    session.add_all([p1, p2, p3, p4])
     session.flush()
 
     # Insert sample appointments (include appointment_time, status as enum)

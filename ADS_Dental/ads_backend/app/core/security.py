@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import HTTPException, Depends, status
@@ -8,20 +8,27 @@ from app.db.session import get_database
 from app.core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+import hashlib
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
 
 def hash_password(password: str):
-    return pwd_context.hash(password)
+    # bcrypt only supports passwords up to 72 bytes
+    if isinstance(password, str):
+        password_bytes = password.encode('utf-8')
+    else:
+        password_bytes = password
+    if len(password_bytes) > 72:
+        password_bytes = hashlib.sha256(password_bytes).hexdigest().encode('utf-8')
+    return pwd_context.hash(password_bytes)
 
 def verify_password(plain: str, hashed: str):
     return pwd_context.verify(plain, hashed)
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
-    # Use timezone-aware datetime
-    expire = datetime.now(datetime.UTC) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -42,8 +49,6 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    # Fix SQLAlchemy where clause type issue
-    # Ensure User.email is a Column and email is a str
     result = await db.execute(select(User).where(User.email == str(email)))
     user = result.scalar_one_or_none()
     if not user:

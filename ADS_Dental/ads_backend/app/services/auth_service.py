@@ -1,10 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from fastapi import HTTPException, status
-from app.db.models import User, Patient, Address
+from app.db.models import User, Patient, Address, Role
 from app.core.security import hash_password, verify_password, create_access_token
 from app.schemas.patient_dto import PatientCreateDTO
 from app.schemas.auth_dto import TokenDTO
+from passlib.exc import UnknownHashError
 
 async def register_patient_service(db: AsyncSession, payload: PatientCreateDTO):
     # Fix SQLAlchemy where clause type issue
@@ -23,6 +24,14 @@ async def register_patient_service(db: AsyncSession, payload: PatientCreateDTO):
     db.add(user)
     await db.commit()
     await db.refresh(user)
+
+    # Assign PATIENT role
+    role_patient = await db.execute(select(Role).where(Role.name == "PATIENT"))
+    role_obj = role_patient.scalar_one_or_none()
+    if role_obj:
+        user.roles.append(role_obj)
+        await db.commit()
+        await db.refresh(user)
 
     address = None
     if payload.address:
@@ -45,12 +54,24 @@ async def register_patient_service(db: AsyncSession, payload: PatientCreateDTO):
 
     return patient
 
-async def login_service(db: AsyncSession, email: str, password: str) -> TokenDTO:
-    # Fix SQLAlchemy where clause type issue
+async def login_service(db: AsyncSession, email: str, password: str):
     result = await db.execute(select(User).where(User.email == str(email)))
     user = result.scalar_one_or_none()
-    if not user or not verify_password(password, user.password_hash):
+    try:
+        valid = user and verify_password(password, user.password_hash)
+    except UnknownHashError:
+        valid = False
+    if not valid:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-
-    token = create_access_token({"sub": user.email, "role": user.role})
-    return TokenDTO(access_token=token, token_type="bearer")
+    role_name = user.roles[0].name if user.roles else None
+    token = create_access_token({"sub": user.email, "role": role_name})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "roles": [r.name for r in user.roles]
+        }
+    }
