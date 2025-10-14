@@ -12,29 +12,30 @@ from app.services.patient_service import (
     list_addresses_service,
     register_patient_service
 )
+from app.api.dependencies.rbac import require_role
 
 router = APIRouter(prefix="/adsweb/api/v1", tags=["Patients"])
 
-@router.post("/patients/register", response_model=PatientDTO, status_code=status.HTTP_201_CREATED)
+@router.post("/patients/register", response_model=PatientDTO, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_role(["PATIENT", "ADMIN"]))])
 async def register_patient(payload: PatientCreateDTO, db: AsyncSession = Depends(get_database)):
     return await register_patient_service(db, payload)
 
-@router.put("/patient/{patient_id}", response_model=PatientDTO)
+@router.put("/patient/{patient_id}", response_model=PatientDTO, dependencies=[Depends(require_role(["ADMIN", "PATIENT"]))])
 async def update_patient(patient_id: int, payload: PatientDTO, db: AsyncSession = Depends(get_database)):
     return await update_patient_service(db, patient_id, payload)
 
-@router.delete("/patient/{patient_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/patient/{patient_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_role(["ADMIN"]))])
 async def delete_patient(patient_id: int, db: AsyncSession = Depends(get_database)):
     await delete_patient_service(db, patient_id)
 
-@router.get("/patient/search/{searchString}", response_model=List[PatientDTO])
+@router.get("/patient/search/{searchString}", response_model=List[PatientDTO], dependencies=[Depends(require_role(["ADMIN", "DENTIST"]))])
 async def search_patient(searchString: str, db: AsyncSession = Depends(get_database)):
     return await search_patient_service(db, searchString)
 
-@router.get("/patients", response_model=List[PatientDTO])
+@router.get("/patients", response_model=List[PatientDTO], dependencies=[Depends(require_role(["ADMIN", "DENTIST"]))])
 async def list_patients(db: AsyncSession = Depends(get_database)):
     return await list_patients_service(db)
 
-@router.get("/addresses", response_model=List[AddressDTO])
+@router.get("/addresses", response_model=List[AddressDTO], dependencies=[Depends(require_role(["ADMIN"]))])
 async def list_addresses(db: AsyncSession = Depends(get_database)):
     return await list_addresses_service(db)
