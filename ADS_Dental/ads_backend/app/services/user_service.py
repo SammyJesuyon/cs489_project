@@ -18,10 +18,10 @@ def user_to_dto(user: User) -> UserDTO:
     )
 
 async def create_user_service(db: AsyncSession, payload: UserCreateDTO) -> UserDTO:
-    existing = await db.execute(select(User).where(User.email == str(payload.email)))
+    existing = await db.execute(select(User).where(User.email == str(payload.email) or User.username == payload.username))
     user_exists = existing.scalar_one_or_none()
     if user_exists:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="User already registered")
     user = User(
         email=payload.email,
         username=payload.username,

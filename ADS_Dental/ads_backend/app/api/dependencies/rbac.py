@@ -1,13 +1,15 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from typing import List
 from app.core.config import SECRET_KEY, ALGORITHM
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
+# Create the HTTP Bearer security scheme
+security = HTTPBearer()
 
 def require_role(roles: List[str]):
-    async def role_checker(token: str = Depends(oauth2_scheme)):
+    async def role_checker(credentials: HTTPAuthorizationCredentials = Depends(security)):
+        token = credentials.credentials
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             user_role = payload.get("role")
@@ -21,4 +23,5 @@ def require_role(roles: List[str]):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials."
             )
+        return payload  # You can return the decoded payload if needed
     return role_checker
