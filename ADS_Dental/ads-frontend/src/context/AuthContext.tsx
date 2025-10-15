@@ -17,12 +17,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (username: string, password: string) => {
-    const data = await api.login(username, password);
+  const login = async (email: string, password: string) => {
+    const data = await api.login(email, password);
     setToken(data.access_token);
     const userData: User = {
-      username,
-      email: username,
+      username : data.user.username,
+      email,
       roles: data.roles || ['PATIENT'],
     };
     setUser(userData);

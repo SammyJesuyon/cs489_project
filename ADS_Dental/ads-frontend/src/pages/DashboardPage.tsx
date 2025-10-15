@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Users, UserCog, Calendar, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../api/apiService';
+import { AppointmentModal } from '../components/AppointmentModal';
+import { Toast } from '../components/Toast';
 
 export const DashboardPage: React.FC = () => {
   const { isAdmin, isDentist, isPatient, token } = useAuth();
@@ -11,6 +13,9 @@ export const DashboardPage: React.FC = () => {
     appointments: 0,
     surgeries: 0,
   });
+
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -34,6 +39,16 @@ export const DashboardPage: React.FC = () => {
     };
     fetchStats();
   }, [token]);
+
+  const handleAppointmentSuccess = () => {
+    setToast({ message: 'Appointment booked successfully', type: 'success' });
+    // Refresh stats
+    if (token) {
+      api.getAppointments(token).then((appointments) => {
+        setStats((prev) => ({ ...prev, appointments: appointments.length }));
+      });
+    }
+  };
 
   const adminCards = [
     { title: 'Total Patients', value: stats.patients, icon: Users, color: 'bg-blue-500' },
@@ -70,18 +85,52 @@ export const DashboardPage: React.FC = () => {
       {isDentist && (
         <div className="bg-white rounded-xl shadow-sm p-6 border">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Appointments</h2>
-          <p className="text-gray-600">View and manage your scheduled appointments.</p>
+          <p className="text-gray-600 mb-4">View and manage your scheduled appointments.</p>
+          <div className="bg-teal-50 p-4 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Appointments</p>
+                <p className="text-2xl font-bold text-teal-600">{stats.appointments}</p>
+              </div>
+              <Calendar className="w-10 h-10 text-teal-500" />
+            </div>
+          </div>
         </div>
       )}
 
       {isPatient && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Welcome Back!</h2>
-          <p className="text-gray-600 mb-4">Book a new appointment or view your upcoming visits.</p>
-          <button className="bg-teal-500 text-white px-6 py-2 rounded-lg hover:bg-teal-600">
-            Book Appointment
-          </button>
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm p-6 border">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Welcome Back!</h2>
+            <p className="text-gray-600 mb-4">Book a new appointment or view your upcoming visits.</p>
+            <button
+              onClick={() => setShowAppointmentModal(true)}
+              className="bg-teal-500 text-white px-6 py-2 rounded-lg hover:bg-teal-600 flex items-center gap-2"
+            >
+              <Calendar className="w-5 h-5" />
+              Book Appointment
+            </button>
+          </div>
+
+          <div className="bg-gradient-to-br from-teal-500 to-blue-500 rounded-xl shadow-sm p-6 text-white">
+            <h3 className="text-lg font-semibold mb-2">Your Appointments</h3>
+            <p className="text-3xl font-bold">{stats.appointments}</p>
+            <p className="text-sm mt-2 opacity-90">Total appointments booked</p>
+          </div>
         </div>
+      )}
+
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+
+      {token && (
+        <AppointmentModal
+          isOpen={showAppointmentModal}
+          onClose={() => setShowAppointmentModal(false)}
+          onSuccess={handleAppointmentSuccess}
+          token={token}
+          appointment={null}
+          mode="create"
+        />
       )}
     </div>
   );

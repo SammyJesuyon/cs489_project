@@ -13,26 +13,22 @@ class ApiService {
     return headers;
   }
 
-  async login(username: string, password: string) {
-    const formData = new URLSearchParams();
-    formData.append('username', username);
-    formData.append('password', password);
+async login(email: string, password: string) {
+  const response = await fetch(`${API_URL}/api/v1/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
 
-    const response = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: formData,
-    });
+  if (!response.ok) throw new Error('Login failed');
+  return response.json();
+}
 
-    if (!response.ok) throw new Error('Login failed');
-    return response.json();
-  }
-
-  async register(username: string, email: string, password: string, role: string) {
-    const response = await fetch(`${API_URL}/auth/register`, {
+  async register(email: string, username: string, password: string, role: string) {
+    const response = await fetch(`${API_URL}/adsweb/api/v1/users`, {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify({ username, email, password, role }),
+      body: JSON.stringify({ email, username, password, role }),
     });
 
     if (!response.ok) throw new Error('Registration failed');
@@ -96,7 +92,7 @@ class ApiService {
 
   // Appointments
   async getAppointments(token: string): Promise<Appointment[]> {
-    const response = await fetch(`${API_URL}/appointments`, {
+    const response = await fetch(`${API_URL}/adsweb/api/v1/appointments`, {
       headers: this.getHeaders(token),
     });
     if (!response.ok) throw new Error('Failed to fetch appointments');
@@ -121,6 +117,14 @@ class ApiService {
     });
     if (!response.ok) throw new Error('Failed to update appointment');
     return response.json();
+  }
+
+  async deleteAppointment(token: string, id: number): Promise<void> {
+    const response = await fetch(`${API_URL}/appointments/${id}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(token),
+    });
+    if (!response.ok) throw new Error('Failed to delete appointment');
   }
 
   // Addresses

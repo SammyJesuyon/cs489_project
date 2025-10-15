@@ -18,7 +18,7 @@ export const LoginPage: React.FC = () => {
       if (isLogin) {
         await login(username, password);
       } else {
-        await register(username, email, password, role);
+        await register(email, username, password, role);
       }
     } catch (err) {
       setError(isLogin ? 'Login failed. Please check your credentials.' : 'Registration failed.');
@@ -83,7 +83,7 @@ export const LoginPage: React.FC = () => {
               >
                 <option value="PATIENT">Patient</option>
                 <option value="DENTIST">Dentist</option>
-                <option value="ADMIN">Admin</option>
+                {/* <option value="ADMIN">Admin</option> */}
               </select>
             </div>
           )}

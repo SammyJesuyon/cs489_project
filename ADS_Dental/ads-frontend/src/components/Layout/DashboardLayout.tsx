@@ -76,7 +76,7 @@ export const DashboardLayout: React.FC = () => {
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <div className="font-medium text-gray-800">{user.username}</div>
-                <div className="text-sm text-gray-500">{user.roles.join(', ')}</div>
+                {/* <div className="text-sm text-gray-500">{user.roles.join(', ')}</div> */}
               </div>
               <div className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center">
                 <span className="text-white font-medium">{user.username.charAt(0).toUpperCase()}</span>
