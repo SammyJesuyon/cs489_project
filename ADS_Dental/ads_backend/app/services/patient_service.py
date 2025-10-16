@@ -3,14 +3,19 @@ from sqlalchemy.future import select
 from app.db.models import User, Patient, Address, Role
 from app.core.security import hash_password
 from app.schemas.patient_dto import PatientDTO, PatientCreateDTO
-from app.schemas.address_dto import AddressDTO
 from fastapi import HTTPException
 import random
 from datetime import datetime
+from sqlalchemy.orm import selectinload
 
 async def list_patients_service(db: AsyncSession):
-    result = await db.execute(select(Patient))
-    return result.scalars().all()
+    result = await db.execute(
+        select(Patient)
+        .options(selectinload(Patient.address))
+        .order_by(Patient.last_name.asc())
+    )
+    patients = result.scalars().all()
+    return patients
 
 async def get_patient_by_id_service(db: AsyncSession, patient_id: int):
     patient = await db.get(Patient, patient_id)
@@ -55,9 +60,13 @@ async def search_patient_service(db: AsyncSession, searchString: str):
     return [PatientDTO.model_validate(p) for p in patients]
 
 async def list_addresses_service(db: AsyncSession):
-    stmt = select(Address)
-    addresses = (await db.execute(stmt)).scalars().all()
-    return [AddressDTO.model_validate(a) for a in addresses]
+    result = await db.execute(
+        select(Address)
+        .options(selectinload(Address.patients))
+        .order_by(Address.city.asc())
+    )
+    addresses = result.scalars().all()
+    return addresses
 
 async def register_patient_service(db: AsyncSession, payload: PatientCreateDTO):
     from sqlalchemy.exc import SQLAlchemyError
