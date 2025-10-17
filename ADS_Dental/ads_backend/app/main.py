@@ -188,7 +188,7 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.api.endpoints import patients, auth, appointments, users, dentists
+from app.api.endpoints import patients, auth, appointments, users, dentists, surgery
 from app.exceptions.http_exceptions import http_exception_handler, generic_exception_handler
 
 
@@ -224,3 +224,4 @@ app.include_router(dentists.router)
 app.include_router(auth.router)
 app.include_router(appointments.router)
 app.include_router(users.router)
+app.include_router(surgery.router)
