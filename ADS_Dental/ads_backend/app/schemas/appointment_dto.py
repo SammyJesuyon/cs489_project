@@ -15,6 +15,7 @@ class AppointmentStatus(str, Enum):
 class AppointmentCreateDTO(BaseModel):
     dentist_id: int
     surgery_id: int
+    patient_id: int
     appointment_date: datetime
 
 class AppointmentDTO(BaseModel):
