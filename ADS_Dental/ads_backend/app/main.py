@@ -187,7 +187,6 @@
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from app.api.endpoints import patients, auth, appointments, users, dentists
 from app.exceptions.http_exceptions import http_exception_handler, generic_exception_handler
@@ -216,9 +215,9 @@ app.add_middleware(
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
-# @app.get("/")
-# async def root():
-#     return {"message": "ADS Dental Surgeries API is running 🚀"}
+@app.get("/")
+async def root():
+    return {"message": "ADS Dental Surgeries API is running 🚀"}
 
 app.include_router(patients.router)
 app.include_router(dentists.router)
