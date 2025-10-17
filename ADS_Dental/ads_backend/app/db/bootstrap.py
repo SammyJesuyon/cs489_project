@@ -2,11 +2,14 @@
 from datetime import date, time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from app.core.config import LIVE_DB
 from app.db.models import Base, Address, Surgery, Dentist, Patient, Appointment, User, Role
 from app.core.security import hash_password
 
 # Set up the engine and session
-engine = create_engine("mysql+pymysql://root:password@localhost:3306/ADSDentalSurgeryDB", echo=False, future=True)
+# engine = create_engine("mysql+pymysql://root:password@localhost:3306/ADSDentalSurgeryDB", echo=False, future=True)
+engine = create_engine(LIVE_DB, echo=False, future=True)
 Session = sessionmaker(bind=engine, autoflush=False)
 
 def bootstrap():
