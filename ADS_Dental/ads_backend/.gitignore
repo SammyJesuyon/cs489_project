@@ -1,0 +1,48 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+*.pot
+*.py[cod]
+*$py.class
+
+# --- Environments ---
+venv/
+.env
+*.env
+
+# --- Byte-compiled ---
+*.so
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+*.manifest
+*.spec
+
+# --- IDE ---
+.idea/
+.vscode/
+.DS_Store
+
+# --- FastAPI / Uvicorn ---
+*.pid
+*.db
+*.db-journal
+
+# --- Migrations (if using Alembic) ---
+alembic/versions/
+alembic.ini
+
+# --- OS / Cache ---
+Thumbs.db
+.cache/
+__MACOSX/
+
+# --- Render logs ---
+*.log
+.render/
