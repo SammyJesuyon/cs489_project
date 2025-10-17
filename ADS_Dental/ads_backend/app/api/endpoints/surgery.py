@@ -9,5 +9,5 @@ from app.services.surgery_service import list_surgeries_service
 router = APIRouter(prefix="/adsweb/api/v1", tags=["Surgeries"])
 
 @router.get("/surgeries", response_model=SurgeryDTO, dependencies=[Depends(require_role(["PATIENT", "ADMIN"]))])
-async def list_surgeries(db : AsyncSession = Depends(get_database())):
+async def list_surgeries(db : AsyncSession = Depends(get_database)):
     return await list_surgeries_service(db)
